@@ -61,6 +61,30 @@ try {
         $fs.Dispose()
     }
 
+    # --- App icon (window + taskbar) and header logo. Non-fatal: a missing icon never blocks startup. ---
+    try {
+        $iconDir = Join-Path $Global:NF_Root 'Logo\F1'
+        $icoPath = Join-Path $iconDir 'novaforge-f1.ico'
+        if (Test-Path -LiteralPath $icoPath) {
+            $Global:NF_Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create((New-Object System.Uri($icoPath)))
+        }
+        $logoPng = Join-Path $iconDir 'novaforge-f1-64.png'
+        $brandBtn = $Global:NF_Window.FindName('BrandHomeButton')
+        if ($brandBtn -and (Test-Path -LiteralPath $logoPng)) {
+            $logo = New-Object System.Windows.Controls.Image
+            $logo.Source = New-Object System.Windows.Media.Imaging.BitmapImage(New-Object System.Uri($logoPng))
+            $logo.Width = 24; $logo.Height = 24; $logo.Margin = '0,0,10,0'
+            $logo.VerticalAlignment = 'Center'
+            [System.Windows.Media.RenderOptions]::SetBitmapScalingMode($logo, 'HighQuality')
+            $brandBtn.Content.Children.Insert(0, $logo)
+        }
+        # Own taskbar identity so Windows shows the Nova Forge icon, not PowerShell's.
+        Add-Type -Name NFShell -Namespace NovaForge -MemberDefinition '[DllImport("shell32.dll")] public static extern int SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string id);' -ErrorAction Stop
+        [NovaForge.NFShell]::SetCurrentProcessExplicitAppUserModelID('NovaForge.App') | Out-Null
+    } catch {
+        Write-NFCrashLog -ErrorRecord $_ -Context "App icon (non-fatal)"
+    }
+
     # --- Controls + views need $Global:NF_Window's resources to already exist ---
     . (Join-Path $Global:NF_SrcRoot 'App\Controls\Controls.ps1')
     . (Join-Path $Global:NF_SrcRoot 'App\Services\ThemeService.ps1')

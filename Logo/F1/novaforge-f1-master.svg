@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>NovaForge icon F1 (master)</title>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8A6CEB"/><stop offset="1" stop-color="#432A96"/></linearGradient>
+  <radialGradient id="g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M256 256 L484.0 256.0 L344.7 219.3 Z" fill="#BAA9EE" stroke="#BAA9EE" stroke-width="1"/>
+  <path d="M256 256 L484.0 256.0 L344.7 292.7 Z" fill="#B3A1ED" stroke="#B3A1ED" stroke-width="1"/>
+  <path d="M256 256 L369.1 369.1 L344.7 292.7 Z" fill="#AA96EB" stroke="#AA96EB" stroke-width="1"/>
+  <path d="M256 256 L369.1 369.1 L292.7 344.7 Z" fill="#AA96EB" stroke="#AA96EB" stroke-width="1"/>
+  <path d="M256 256 L256.0 484.0 L292.7 344.7 Z" fill="#B3A1ED" stroke="#B3A1ED" stroke-width="1"/>
+  <path d="M256 256 L256.0 484.0 L219.3 344.7 Z" fill="#BAA9EE" stroke="#BAA9EE" stroke-width="1"/>
+  <path d="M256 256 L142.9 369.1 L219.3 344.7 Z" fill="#CEC2F3" stroke="#CEC2F3" stroke-width="1"/>
+  <path d="M256 256 L142.9 369.1 L167.3 292.7 Z" fill="#DAD2F6" stroke="#DAD2F6" stroke-width="1"/>
+  <path d="M256 256 L28.0 256.0 L167.3 292.7 Z" fill="#EEEBFB" stroke="#EEEBFB" stroke-width="1"/>
+  <path d="M256 256 L28.0 256.0 L167.3 219.3 Z" fill="#F5F3FC" stroke="#F5F3FC" stroke-width="1"/>
+  <path d="M256 256 L142.9 142.9 L167.3 219.3 Z" fill="#FEFEFE" stroke="#FEFEFE" stroke-width="1"/>
+  <path d="M256 256 L142.9 142.9 L219.3 167.3 Z" fill="#FEFEFE" stroke="#FEFEFE" stroke-width="1"/>
+  <path d="M256 256 L256.0 28.0 L219.3 167.3 Z" fill="#F5F3FC" stroke="#F5F3FC" stroke-width="1"/>
+  <path d="M256 256 L256.0 28.0 L292.7 167.3 Z" fill="#EEEBFB" stroke="#EEEBFB" stroke-width="1"/>
+  <path d="M256 256 L369.1 142.9 L292.7 167.3 Z" fill="#DAD2F6" stroke="#DAD2F6" stroke-width="1"/>
+  <path d="M256 256 L369.1 142.9 L344.7 219.3 Z" fill="#CEC2F3" stroke="#CEC2F3" stroke-width="1"/>
+  <circle cx="256" cy="256" r="56" fill="url(#g)"/>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>NovaForge icon F1 (small sizes)</title>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C5CE0"/><stop offset="1" stop-color="#4B30A6"/></linearGradient>
+  <radialGradient id="g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.9"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <path d="M256 256 L496.0 256.0 L365.0 210.8 Z" fill="#BAAAEE" stroke="#BAAAEE" stroke-width="1"/>
+  <path d="M256 256 L496.0 256.0 L365.0 301.2 Z" fill="#B2A0ED" stroke="#B2A0ED" stroke-width="1"/>
+  <path d="M256 256 L380.5 380.5 L365.0 301.2 Z" fill="#AA96EB" stroke="#AA96EB" stroke-width="1"/>
+  <path d="M256 256 L380.5 380.5 L301.2 365.0 Z" fill="#AA96EB" stroke="#AA96EB" stroke-width="1"/>
+  <path d="M256 256 L256.0 496.0 L301.2 365.0 Z" fill="#B2A0ED" stroke="#B2A0ED" stroke-width="1"/>
+  <path d="M256 256 L256.0 496.0 L210.8 365.0 Z" fill="#BAAAEE" stroke="#BAAAEE" stroke-width="1"/>
+  <path d="M256 256 L131.5 380.5 L210.8 365.0 Z" fill="#CDC2F3" stroke="#CDC2F3" stroke-width="1"/>
+  <path d="M256 256 L131.5 380.5 L147.0 301.2 Z" fill="#DBD2F6" stroke="#DBD2F6" stroke-width="1"/>
+  <path d="M256 256 L16.0 256.0 L147.0 301.2 Z" fill="#EEEAFB" stroke="#EEEAFB" stroke-width="1"/>
+  <path d="M256 256 L16.0 256.0 L147.0 210.8 Z" fill="#F6F4FC" stroke="#F6F4FC" stroke-width="1"/>
+  <path d="M256 256 L131.5 131.5 L147.0 210.8 Z" fill="#FEFEFE" stroke="#FEFEFE" stroke-width="1"/>
+  <path d="M256 256 L131.5 131.5 L210.8 147.0 Z" fill="#FEFEFE" stroke="#FEFEFE" stroke-width="1"/>
+  <path d="M256 256 L256.0 16.0 L210.8 147.0 Z" fill="#F6F4FC" stroke="#F6F4FC" stroke-width="1"/>
+  <path d="M256 256 L256.0 16.0 L301.2 147.0 Z" fill="#EEEAFB" stroke="#EEEAFB" stroke-width="1"/>
+  <path d="M256 256 L380.5 131.5 L301.2 147.0 Z" fill="#DBD2F6" stroke="#DBD2F6" stroke-width="1"/>
+  <path d="M256 256 L380.5 131.5 L365.0 210.8 Z" fill="#CDC2F3" stroke="#CDC2F3" stroke-width="1"/>
+</svg>
