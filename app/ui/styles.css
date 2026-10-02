@@ -158,3 +158,40 @@ label.field { display: block; font-weight: 580; margin-bottom: 6px; }
 .legal h3 { margin: 18px 0 6px; font-size: 15px; }
 .plan-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .plan-list span { background: var(--surface-2); border: 1px dashed var(--line-strong); color: var(--muted); border-radius: 999px; padding: 5px 13px; font-size: 12.5px; }
+
+/* ---------- Nova product switcher (same design as Atlas / Replay.gg / Nova Cut) ---------- */
+.topbar { justify-content: flex-end; }
+.switcher { margin-right: auto; }
+.switcher-trigger { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 640; cursor: pointer; transition: background .12s, color .12s, border-color .12s; }
+.switcher-trigger:hover, .switcher-trigger[aria-expanded="true"] { background: var(--surface-2); color: var(--text); }
+.switcher-trigger[aria-expanded="true"] { border-color: var(--line-strong); }
+.switcher-trigger svg.i { width: 12px; height: 12px; transition: transform .15s; }
+.switcher-trigger[aria-expanded="true"] svg.i { transform: rotate(180deg); }
+.sw-mark { width: 16px; height: 16px; border-radius: 4px; overflow: hidden; display: block; }
+.sw-mark svg { width: 100%; height: 100%; display: block; }
+.switcher-menu { position: fixed; z-index: 70; width: 268px; background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 12px; padding: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.5); transform-origin: top left; opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(-6px) scale(.96); transition: opacity .16s ease-out, transform .16s ease-out, visibility .16s; }
+.switcher-menu[data-open] { opacity: 1; visibility: visible; pointer-events: auto; transform: none; }
+.sw-head { margin: 2px 8px 6px; font-size: 10px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--faint); }
+.sw-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; border-radius: 8px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+button.sw-row:hover { background: var(--surface-3); }
+.sw-row.current { background: var(--accent-soft); cursor: default; }
+.sw-row.soon { color: var(--faint); cursor: default; }
+.sw-ic { width: 28px; height: 28px; border-radius: 7px; background: var(--surface-3); display: grid; place-items: center; flex: none; color: var(--muted); }
+.sw-ic svg.i { width: 16px; height: 16px; }
+.sw-row.current .sw-ic { color: var(--accent); }
+.sw-tx { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.sw-tx b { font-size: 13px; font-weight: 640; }
+.sw-tx small { font-size: 11px; color: var(--faint); }
+.sw-row.current .sw-tx small { color: var(--accent); }
+.sw-row > svg.i { margin-left: auto; width: 14px; height: 14px; color: var(--faint); }
+.sw-soon { margin-left: auto; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-3); color: var(--faint); }
+.sw-all { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 4px; padding: 9px; border: 0; border-top: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-size: 12px; font-weight: 640; cursor: pointer; border-radius: 0 0 8px 8px; }
+.sw-all:hover { color: var(--text); background: var(--surface-3); }
+.sw-all svg.i { width: 14px; height: 14px; }
+.sw-list { display: flex; flex-direction: column; gap: 2px; }
+
+.modal.wide { width: min(780px, 94vw); }
+.sw-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.modal::-webkit-scrollbar { width: 10px; }
+.modal::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; border: 2px solid var(--surface); }
+.modal::-webkit-scrollbar-track { background: transparent; }

@@ -36,6 +36,14 @@ const ICONS = {
   info: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
   edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   play: '<polygon points="5 3 19 12 5 21 5 3"/>',
+  scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/>',
+  gamepad: '<line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/>',
+  sparkles: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>',
+  chevron: '<polyline points="6 9 12 15 18 9"/>',
+  arrow: '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
 };
 const icon = (n) => h("span", { html: `<svg class="i" viewBox="0 0 24 24">${ICONS[n] || ""}</svg>` }).firstChild;
 
@@ -48,10 +56,10 @@ const ext = (url) => api("open_url", { url }).catch((e) => toast(String(e), "bad
 const fail = (e) => toast(String(e), "bad");
 const uuid = () => ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) => (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16));
 
-function openModal(build) {
+function openModal(build, cls) {
   const root = document.getElementById("modal");
   const close = () => { root.hidden = true; root.replaceChildren(); };
-  root.replaceChildren(h("div", { class: "modal", onclick: (e) => e.stopPropagation() }, build(close)));
+  root.replaceChildren(h("div", { class: "modal " + (cls || ""), onclick: (e) => e.stopPropagation() }, build(close)));
   root.onclick = close;
   root.hidden = false;
   return close;
@@ -164,7 +172,7 @@ function renderSide() {
 }
 function renderTop() {
   const top = document.getElementById("topbar");
-  const kids = [];
+  const kids = [novaSwitcher()];
   if (inGame()) {
     const g = game(S.gameId), p = activeProfile(S.gameId);
     kids.push(h("span", { class: "pill" }, `${g.shortName}  ·  Profile: ${p ? p.name : "none"}`));
@@ -332,6 +340,7 @@ async function viewMods() {
       const lp = m.launcherPath;
       return h("div", { class: "row" },
         h("div", { class: "grow" }, h("div", { class: "title" }, m.name), m.notes && h("div", { class: "meta" }, m.notes), m.sourcePath && h("div", { class: "meta" }, "Location: " + m.sourcePath)),
+        m.sourcePath ? h("button", { class: "btn sm ghost", title: m.sourcePath, onclick: () => api("open_path", { path: m.sourcePath }).catch(() => toast("That folder doesn't exist on this PC.", "bad")) }, "Show folder") : null,
         lp ? h("button", { class: "btn sm", title: lp, onclick: () => api("launch_exe", { path: lp }).catch(fail) }, icon("play"), "Open launcher") : null,
         h("label", { class: "toggle" }, h("input", { type: "checkbox", checked: m.enabled, onchange: (e) => { m.enabled = e.target.checked; persist(); } }), h("span", {})),
         h("button", { class: "btn sm danger", onclick: async () => { if (await confirmBox("Remove entry?", `"${m.name}" will be removed from this catalog. The mod's files are not touched.`, "Remove")) { mods = mods.filter((x) => x.id !== m.id); await persist(); draw(); count.textContent = `Cataloged mods (${mods.length})`; } } }, "Remove"));
@@ -426,6 +435,77 @@ async function viewSettings() {
     out.push(h("div", { class: "card" }, h("h2", {}, "Nova Forge"), h("p", { class: "muted", style: "margin-top:6px" }, `Version ${S.boot.version}. A game customization and mod catalog tool. Not an emulator; includes no game files.`)));
   }
   return out;
+}
+
+
+/* ---------- Nova product switcher ---------- */
+// Same list and behavior as Atlas / Replay.gg / Nova Cut (kept in sync by hand). Apps start if installed,
+// otherwise open their download page; sites open in the browser. Address table lives in the backend.
+const NOVA_MARK = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5.5" fill="#0E1120"/><path fill="#7C5CFF" d="M12 3.1c.52 5.46 3.95 8.89 9.41 9.41-5.46.52-8.89 3.95-9.41 9.41-.52-5.46-3.95-8.89-9.41-9.41C8.05 11.99 11.48 8.56 12 3.1Z"/></svg>';
+const NOVA_CURRENT = "nova-forge";
+const NOVA_PRODUCTS = [
+  { id: "nova-cut", label: "Nova Cut", tagline: "Create and edit", icon: "scissors", kind: "soon" },
+  { id: "replay-gg", label: "Replay.GG", tagline: "Record and clip gameplay", icon: "gamepad", kind: "app" },
+  { id: "atlas", label: "Atlas", tagline: "Your desktop assistant", icon: "sparkles", kind: "app" },
+  { id: "nova-forge", label: "Nova Forge", tagline: "Customize games and mods", icon: "tool", kind: "app" },
+  { id: "nova-games", label: "Nova Games", tagline: "Coming soon", icon: "gamepad", kind: "soon" },
+];
+const NOVA_SITES = [
+  { id: "nova-help", label: "Nova.Help", tagline: "Support and guides", icon: "search", kind: "site" },
+  { id: "atlas-site", label: "Atlas Website", tagline: "Download and learn about Atlas", icon: "sparkles", kind: "site" },
+  { id: "nova", label: "Nova", tagline: "The Nova home page", icon: "globe", kind: "site" },
+  { id: "nova-legal", label: "Nova Legal", tagline: "Terms and privacy", icon: "file", kind: "site" },
+  { id: "nova-cut-site", label: "Nova Cut Website", tagline: "Nova Cut, on the web", icon: "scissors", kind: "soon" },
+];
+let switcherOpen = false;
+let switcherMenu = null;
+
+function closeSwitcher() {
+  switcherOpen = false;
+  if (switcherMenu) switcherMenu.removeAttribute("data-open");
+  document.querySelectorAll(".switcher-trigger").forEach((b) => b.setAttribute("aria-expanded", "false"));
+}
+async function openNovaProduct(p, after) {
+  if (p.kind === "soon") return toast(`${p.label} isn't available yet.`);
+  const r = await api("open_product", { id: p.id }).catch((e) => { toast(`Couldn't open ${p.label}: ${e}`, "bad"); return null; });
+  if (!r) return;
+  if (r === "notinstalled") toast(`${p.label} isn't installed on this PC \u2014 opened its page.`);
+  else if (r === "running") toast(`${p.label} is already running (check the system tray).`);
+  after && after();
+}
+function productRow(p, onPick) {
+  const current = p.id === NOVA_CURRENT;
+  const body = [h("span", { class: "sw-ic" }, icon(p.icon)),
+    h("span", { class: "sw-tx" }, h("b", {}, p.label), h("small", {}, current ? "You're here" : p.tagline))];
+  if (current) return h("span", { class: "sw-row current", role: "menuitem" }, body);
+  if (p.kind === "soon") return h("span", { class: "sw-row soon", role: "menuitem", "aria-disabled": "true" }, body, h("span", { class: "sw-soon" }, "Soon"));
+  return h("button", { class: "sw-row", role: "menuitem", onclick: () => onPick(p) }, body, p.kind === "site" ? icon("globe") : null);
+}
+function openAllProducts() {
+  const col = (title, items) => h("div", {}, h("h3", { style: "margin:0 0 8px" }, title), h("div", { class: "sw-list" }, items.map((p) => productRow(p, (x) => openNovaProduct(x)))));
+  openModal((close) => [h("h2", {}, "Nova"), h("p", { class: "muted", style: "margin:4px 0 16px" }, "Apps and websites from the Nova family."),
+    h("div", { class: "sw-cols" }, col("Apps", NOVA_PRODUCTS), col("Websites", NOVA_SITES)),
+    h("div", { class: "actions" }, h("button", { class: "btn", onclick: close }, "Close"))], "wide");
+}
+function novaSwitcher() {
+  const trigger = h("button", { class: "switcher-trigger", "aria-haspopup": "menu", "aria-expanded": "false" },
+    h("span", { class: "sw-mark", html: NOVA_MARK }), h("span", {}, "Product Switcher"), icon("chevron"));
+  if (!switcherMenu) {
+    switcherMenu = h("div", { class: "switcher-menu", role: "menu" });
+    document.body.append(switcherMenu);
+    document.addEventListener("click", (e) => { if (switcherOpen && !switcherMenu.contains(e.target) && !e.target.closest(".switcher-trigger")) closeSwitcher(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && switcherOpen) closeSwitcher(); });
+  }
+  switcherMenu.replaceChildren(h("p", { class: "sw-head" }, "Nova"),
+    ...NOVA_PRODUCTS.map((p) => productRow(p, (x) => openNovaProduct(x, closeSwitcher))),
+    h("button", { class: "sw-all", onclick: () => { closeSwitcher(); openAllProducts(); } }, "View all", icon("arrow")));
+  trigger.addEventListener("click", () => {
+    if (switcherOpen) return closeSwitcher();
+    const r = trigger.getBoundingClientRect();
+    switcherMenu.style.top = r.bottom + 8 + "px"; switcherMenu.style.left = r.left + "px";
+    switcherOpen = true; switcherMenu.setAttribute("data-open", ""); trigger.setAttribute("aria-expanded", "true");
+  });
+  return h("div", { class: "switcher" }, trigger);
 }
 
 /* ---------- boot ---------- */

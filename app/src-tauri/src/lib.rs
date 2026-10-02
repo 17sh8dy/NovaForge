@@ -297,6 +297,165 @@ fn backup_save(game: String, profile: String, source: String) -> Result<Value, S
     Ok(rec)
 }
 
+/* ---------- Nova product switcher: open a sibling Nova product ---------- */
+// The UI only ever sends a product id. What an id means (which site to open, which program to start)
+// lives in this table, so the UI can't ask the backend to run an arbitrary path or open an arbitrary URL.
+// KEEP IN SYNC BY HAND with the product lists in Atlas / Replay.gg / Nova Cut.
+const NOVA_HOME_URL: &str = "https://nova-780.pages.dev/";
+
+enum Product {
+    Site(&'static str),
+    App { names: &'static [&'static str], get_url: &'static str },
+}
+
+fn product(id: &str) -> Option<Product> {
+    Some(match id {
+        "nova-help" => Product::Site("https://nova-help.shadylabs.workers.dev/"),
+        "nova" => Product::Site(NOVA_HOME_URL),
+        "atlas-site" => Product::Site("https://atlas-website.shadylabs.workers.dev/"),
+        "nova-legal" => Product::Site("https://nova-legal.shadylabs.workers.dev/"),
+        "atlas" => Product::App { names: &["Atlas"], get_url: "https://atlas-website.shadylabs.workers.dev/" },
+        "replay-gg" => Product::App { names: &["Replay.gg", "ReplayGG"], get_url: NOVA_HOME_URL },
+        _ => return None,
+    })
+}
+
+fn norm(s: &str) -> String {
+    s.chars().filter(|c| c.is_ascii_alphanumeric()).collect::<String>().to_lowercase()
+}
+
+#[cfg(windows)]
+fn hidden(c: &mut Command) -> &mut Command {
+    use std::os::windows::process::CommandExt;
+    c.creation_flags(0x0800_0000) // CREATE_NO_WINDOW
+}
+#[cfg(not(windows))]
+fn hidden(c: &mut Command) -> &mut Command {
+    c
+}
+
+fn icon_exe(value: &str) -> Option<PathBuf> {
+    let mut v = value.trim().trim_start_matches('"').to_string();
+    if let Some(i) = v.rfind(',') {
+        if v[i + 1..].trim().trim_start_matches('-').chars().all(|c| c.is_ascii_digit()) {
+            v.truncate(i);
+        }
+    }
+    let p = PathBuf::from(v.trim().trim_end_matches('"'));
+    (p.extension().map(|e| e.eq_ignore_ascii_case("exe")).unwrap_or(false) && p.is_file()).then_some(p)
+}
+
+fn exe_in_folder(folder: &str, names: &[&str]) -> Option<PathBuf> {
+    let dir = PathBuf::from(folder.trim().trim_matches('"'));
+    let files: Vec<PathBuf> = fs::read_dir(&dir).ok()?.filter_map(|e| e.ok()).map(|e| e.path())
+        .filter(|p| p.extension().map(|e| e.eq_ignore_ascii_case("exe")).unwrap_or(false)).collect();
+    let wanted: Vec<String> = names.iter().map(|n| norm(n)).collect();
+    let stem = |p: &PathBuf| norm(&p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default());
+    files.iter().find(|p| wanted.contains(&stem(p))).cloned().or_else(|| {
+        files.iter().find(|p| {
+            let n = p.file_name().map(|s| s.to_string_lossy().to_lowercase()).unwrap_or_default();
+            !["unins", "uninst", "update", "setup", "crashpad"].iter().any(|b| n.starts_with(b))
+        }).cloned()
+    })
+}
+
+/// Finds an installed program by its name in Windows' own Uninstall registry hives.
+fn find_installed(names: &[&str]) -> Option<PathBuf> {
+    let wanted: Vec<String> = names.iter().map(|n| norm(n)).collect();
+    for key in [
+        r"HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        r"HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall",
+        r"HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+    ] {
+        let out = match hidden(Command::new("reg").args(["query", key, "/s"])).output() {
+            Ok(o) => String::from_utf8_lossy(&o.stdout).to_string(),
+            Err(_) => continue,
+        };
+        let mut block = String::new();
+        let mut blocks: Vec<String> = vec![];
+        for line in out.lines() {
+            if line.starts_with("HKEY_") && !block.is_empty() {
+                blocks.push(std::mem::take(&mut block));
+            }
+            block.push_str(line);
+            block.push('\n');
+        }
+        blocks.push(block);
+        for b in blocks {
+            let field = |name: &str| -> Option<String> {
+                b.lines().find_map(|l| {
+                    let t = l.trim();
+                    let (n, rest) = t.split_once(char::is_whitespace)?;
+                    if !n.eq_ignore_ascii_case(name) {
+                        return None;
+                    }
+                    let (_ty, val) = rest.trim_start().split_once(char::is_whitespace)?;
+                    Some(val.trim().to_string())
+                })
+            };
+            let Some(display) = field("DisplayName") else { continue };
+            if !wanted.contains(&norm(&display)) {
+                continue;
+            }
+            if let Some(exe) = field("DisplayIcon").and_then(|v| icon_exe(&v))
+                .or_else(|| field("InstallLocation").and_then(|v| exe_in_folder(&v, names)))
+            {
+                return Some(exe);
+            }
+        }
+    }
+    None
+}
+
+/// Some Nova apps aren't single-instance: if it's already running, raise its window instead of starting a second copy.
+fn raise_if_running(exe: &Path) -> &'static str {
+    let script = "$exe = $env:NOVA_EXE; $procs = @(Get-Process | Where-Object { $_.Path -eq $exe }); if ($procs.Count -eq 0) { 'none'; exit }; \
+Add-Type -Namespace Nova -Name Win -MemberDefinition '[DllImport(\"user32.dll\")] public static extern bool ShowWindow(System.IntPtr h, int n); [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(System.IntPtr h);'; \
+$win = $procs | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1; \
+if ($win) { [Nova.Win]::ShowWindow($win.MainWindowHandle, 9) | Out-Null; [Nova.Win]::SetForegroundWindow($win.MainWindowHandle) | Out-Null; 'focused' } else { 'running' }";
+    let out = hidden(Command::new("powershell").args(["-NoProfile", "-NonInteractive", "-Command", script]).env("NOVA_EXE", exe)).output();
+    match out.map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string()) {
+        Ok(s) if s == "focused" => "focused",
+        Ok(s) if s == "running" => "running",
+        _ => "none",
+    }
+}
+
+/// Opens a Nova product: a website in the browser, or a desktop app (started if installed, otherwise
+/// its download page). Returns what happened so the UI can say so.
+#[tauri::command]
+async fn open_product(id: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
+        let open = |url: &str| Command::new("explorer.exe").arg(url).spawn().map(|_| ()).map_err(|e| e.to_string());
+        match product(&id).ok_or("unknown product")? {
+            Product::Site(url) => {
+                open(url)?;
+                Ok("browser".into())
+            }
+            Product::App { names, get_url } => match find_installed(names) {
+                Some(exe) => match raise_if_running(&exe) {
+                    "focused" => Ok("focused".into()),
+                    "running" => Ok("running".into()),
+                    _ => {
+                        let mut c = Command::new(&exe);
+                        if let Some(d) = exe.parent() {
+                            c.current_dir(d);
+                        }
+                        c.spawn().map_err(|e| e.to_string())?;
+                        Ok("launched".into())
+                    }
+                },
+                None => {
+                    open(get_url)?;
+                    Ok("notinstalled".into())
+                }
+            },
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = Map::<String, Value>::new();
@@ -304,7 +463,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             bootstrap, save_config, list_profiles, create_profile, save_profile, delete_profile,
             list_mods, save_mods, validate_folder, pick_folder, pick_file, open_url, open_path,
-            launch_exe, list_backups, backup_save
+            launch_exe, list_backups, backup_save, open_product
         ])
         .run(tauri::generate_context!())
         .expect("error while running Nova Forge");
