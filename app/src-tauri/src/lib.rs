@@ -220,7 +220,10 @@ async fn pick_folder(title: String) -> Option<String> {
 #[tauri::command]
 async fn pick_file(title: String, ext: String) -> Option<String> {
     tauri::async_runtime::spawn_blocking(move || {
-        rfd::FileDialog::new().set_title(&title).add_filter(&ext, &[ext.as_str()]).pick_file().map(|p| p.to_string_lossy().to_string())
+        {
+            let exts: Vec<&str> = ext.split(',').collect();
+            rfd::FileDialog::new().set_title(&title).add_filter(&ext, &exts).pick_file().map(|p| p.to_string_lossy().to_string())
+        }
     })
     .await
     .ok()
@@ -456,6 +459,127 @@ async fn open_product(id: String) -> Result<String, String> {
     .map_err(|e| e.to_string())?
 }
 
+/* ---------- Play: find and start the emulators you already use ---------- */
+// Nova Forge never bundles or downloads an emulator. It looks for ones you installed, and starts one with a game
+// file you point it at. Only Cemu.exe and Ryujinx.exe (Ryubing keeps that name) are accepted.
+fn emulator_kind(exe: &Path) -> Option<&'static str> {
+    match exe.file_name()?.to_str()?.to_ascii_lowercase().as_str() {
+        "cemu.exe" => Some("cemu"),
+        "ryujinx.exe" => Some("ryubing"),
+        _ => None,
+    }
+}
+
+fn scan_for_emulators(dir: &Path, depth: u32, out: &mut Vec<PathBuf>) {
+    let Ok(entries) = fs::read_dir(dir) else { return };
+    for e in entries.flatten() {
+        let p = e.path();
+        if p.is_dir() {
+            if depth > 0 {
+                scan_for_emulators(&p, depth - 1, out);
+            }
+        } else if emulator_kind(&p).is_some() {
+            out.push(p);
+        }
+    }
+}
+
+fn mtime_secs(p: &Path) -> u64 {
+    fs::metadata(p).and_then(|m| m.modified()).ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok()).map(|d| d.as_secs()).unwrap_or(0)
+}
+
+/// Emulators found in the usual places (plus any paths you saved on a profile), newest-modified first.
+#[tauri::command]
+async fn detect_emulators(extra: Vec<String>) -> Vec<Value> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let env = |k: &str| PathBuf::from(std::env::var(k).unwrap_or_default());
+        let (local, home) = (env("LOCALAPPDATA"), env("USERPROFILE"));
+        let mut roots: Vec<PathBuf> = ["C:\\Apps", "D:\\Apps", "C:\\Emulators", "D:\\Emulators", "C:\\Program Files", "C:\\Program Files (x86)"]
+            .iter().map(PathBuf::from).collect();
+        roots.extend([local.join("Programs"), local.join("Ryujinx"), home.join("Desktop"), home.join("Downloads")]);
+        let mut found: Vec<PathBuf> = vec![];
+        for r in &roots {
+            scan_for_emulators(r, 3, &mut found);
+        }
+        for e in extra {
+            let p = PathBuf::from(e);
+            if p.is_file() && emulator_kind(&p).is_some() {
+                found.push(p);
+            }
+        }
+        found.sort_by_key(|p| std::cmp::Reverse(mtime_secs(p)));
+        let mut seen: Vec<String> = vec![];
+        let mut out = vec![];
+        for p in found {
+            let s = p.to_string_lossy().to_string();
+            if seen.iter().any(|x| x.eq_ignore_ascii_case(&s)) {
+                continue;
+            }
+            seen.push(s.clone());
+            out.push(json!({ "kind": emulator_kind(&p), "exe": s }));
+        }
+        out
+    })
+    .await
+    .unwrap_or_default()
+}
+
+fn first_file_with_ext(dir: &Path, exts: &[&str], depth: u32) -> Option<PathBuf> {
+    let mut entries: Vec<PathBuf> = fs::read_dir(dir).ok()?.flatten().map(|e| e.path()).collect();
+    entries.sort();
+    for p in &entries {
+        if p.is_file() && p.extension().and_then(|e| e.to_str()).is_some_and(|e| exts.iter().any(|x| x.eq_ignore_ascii_case(e))) {
+            return Some(p.clone());
+        }
+    }
+    if depth > 0 {
+        for p in entries.iter().filter(|p| p.is_dir()) {
+            if let Some(f) = first_file_with_ext(p, exts, depth - 1) {
+                return Some(f);
+            }
+        }
+    }
+    None
+}
+
+/// What would actually be handed to the emulator: a Wii U dump's .rpx for Cemu, a .nsp/.xci for Ryujinx/Ryubing.
+#[tauri::command]
+fn resolve_game(kind: String, path: String) -> Option<String> {
+    let p = Path::new(&path);
+    let exts: &[&str] = if kind == "cemu" { &["rpx", "wua", "wud", "wux"] } else { &["nsp", "xci"] };
+    let ok = |f: &Path| f.extension().and_then(|e| e.to_str()).is_some_and(|e| exts.iter().any(|x| x.eq_ignore_ascii_case(e)));
+    if p.is_file() {
+        return ok(p).then(|| path.clone());
+    }
+    if !p.is_dir() {
+        return None;
+    }
+    let found = if kind == "cemu" { first_file_with_ext(&p.join("code"), exts, 0).or_else(|| first_file_with_ext(p, exts, 1)) } else { first_file_with_ext(p, exts, 2) };
+    found.map(|f| f.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+fn play(emulator: String, game: String) -> Result<String, String> {
+    let exe = Path::new(&emulator);
+    let kind = emulator_kind(exe).ok_or("that isn't Cemu.exe or Ryujinx.exe")?;
+    if !exe.is_file() {
+        return Err("the emulator was not found at that path".into());
+    }
+    let target = resolve_game(kind.to_string(), game).ok_or("no game file found to start")?;
+    let mut c = Command::new(exe);
+    if kind == "cemu" {
+        c.args(["-g", &target]);
+    } else {
+        c.arg(&target);
+    }
+    if let Some(d) = exe.parent() {
+        c.current_dir(d);
+    }
+    c.spawn().map_err(|e| e.to_string())?;
+    Ok(target)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let _ = Map::<String, Value>::new();
@@ -463,7 +587,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             bootstrap, save_config, list_profiles, create_profile, save_profile, delete_profile,
             list_mods, save_mods, validate_folder, pick_folder, pick_file, open_url, open_path,
-            launch_exe, list_backups, backup_save, open_product
+            launch_exe, list_backups, backup_save, open_product, detect_emulators, resolve_game, play
         ])
         .run(tauri::generate_context!())
         .expect("error while running Nova Forge");

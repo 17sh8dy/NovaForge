@@ -296,6 +296,7 @@ async function viewOverview() {
   const g = game(S.gameId), p = activeProfile(g.id);
   const out = [pageHead(g.name, `${g.platform}  ·  Active profile: ${p.name}`)];
   if (g.about) out.push(h("div", { class: "notice info" }, icon("info"), g.about));
+  if (g.supported && g.emulators.length) out.push(await playCard(g, p));
   out.push(legalBanner());
 
   const dirs = h("div", { class: "card" }, h("h2", {}, "Game Directory"),
@@ -320,6 +321,63 @@ async function viewOverview() {
           h("button", { class: "btn sm", onclick: () => ext(e.url) }, "Open site", icon("ext"))); }))));
   }
   return out;
+}
+
+
+/* ---------- Play: start an emulator you already installed ---------- */
+const EMU_NAME = { cemu: "Cemu", ryubing: "Ryubing / Ryujinx" };
+const emuKind = (exe) => (exe && exe.toLowerCase().endsWith("cemu.exe") ? "cemu" : exe && exe.toLowerCase().endsWith("ryujinx.exe") ? "ryubing" : null);
+async function playCard(g, p) {
+  // The folder scan can take a few seconds, so it runs once per session and is reused.
+  if (!S.emus) S.emus = await api("detect_emulators", { extra: [] });
+  const found = S.emus.filter((e) => g.emulators.includes(e.kind));
+  const gameSrc = p.gameFile || p.gameDirectory || "";
+  // Default to the emulator that lives next to this game's files, otherwise the first one found.
+  const dirOf = (f) => f.slice(0, f.lastIndexOf("\\") + 1).toLowerCase();
+  const beside = found.find((e) => gameSrc && gameSrc.toLowerCase().startsWith(dirOf(e.exe)));
+  const exe = p.emulatorPath || (beside || found[0] || {}).exe || "";
+  const kind = emuKind(exe);
+  const target = kind && gameSrc ? await api("resolve_game", { kind, path: gameSrc }) : null;
+  const choose = async (path) => { await updateProfile(p, { emulatorPath: path }).catch(fail); render(); };
+
+  const options = found.map((e) => h("option", { value: e.exe, selected: e.exe === exe }, `${EMU_NAME[e.kind]} \u2014 ${e.exe}`));
+  if (exe && !found.some((e) => e.exe === exe)) options.unshift(h("option", { value: exe, selected: true }, `${EMU_NAME[kind] || "Emulator"} \u2014 ${exe}`));
+  const sel = h("select", { onchange: () => choose(sel.value) }, options.length ? options : [h("option", { value: "" }, "No emulator found \u2014 use Browse")]);
+
+  let status;
+  if (!exe) status = h("div", { class: "faint small" }, "Pick an emulator you've installed. Nova Forge doesn't include one \u2014 see Suggested Emulators below.");
+  else if (!gameSrc) status = h("div", { class: "faint small" }, "Set a game folder below (or choose a game file) so Nova Forge knows what to start.");
+  else if (!target) status = h("div", { class: "err" }, kind === "cemu" ? "No .rpx game file found in that folder." : "Ryubing / Ryujinx needs a Switch game file (.nsp or .xci). Choose one with \u201cChoose game file\u201d.");
+  else status = h("div", { class: "small muted", style: "overflow-wrap:anywhere" }, "Will start: " + target);
+
+  const play = h("button", { class: "btn primary", disabled: !(exe && target), onclick: async () => {
+    const r = await api("play", { emulator: exe, game: gameSrc }).catch(fail);
+    if (r) toast(`Starting ${EMU_NAME[kind]}\u2026`, "ok"); } }, icon("play"), "Play");
+
+  return h("div", { class: "card" }, h("h2", {}, "Play"),
+    h("div", { class: "sub" }, "Starts the emulator you installed, using this profile's game. Nova Forge only launches it \u2014 it doesn't change your game, and mods are applied by the emulator itself."),
+    h("div", { class: "field-block" }, h("label", { class: "field" }, "Emulator"), h("div", { class: "fieldrow" }, sel,
+      h("button", { class: "btn", onclick: async () => {
+        const v = await api("pick_file", { title: "Select Cemu.exe or Ryujinx.exe", ext: "exe" }).catch(fail); if (!v) return;
+        if (!g.emulators.includes(emuKind(v))) return toast("Pick Cemu.exe or Ryujinx.exe for this game.", "bad");
+        if (!S.emus.some((e) => e.exe === v)) S.emus.push({ kind: emuKind(v), exe: v });
+        choose(v); } }, "Browse\u2026"))),
+    h("div", { class: "field-block" }, h("label", { class: "field" }, "Game"), status,
+      kind ? h("div", { style: "margin-top:8px" }, h("button", { class: "btn sm", onclick: async () => {
+        const v = await api("pick_file", { title: "Select the game file", ext: kind === "cemu" ? "rpx,wua,wud,wux" : "nsp,xci" }).catch(fail); if (!v) return;
+        await updateProfile(p, { gameFile: v }).catch(fail); render(); } }, "Choose game file\u2026"),
+        p.gameFile ? h("button", { class: "btn sm ghost", onclick: async () => { await updateProfile(p, { gameFile: null }).catch(fail); render(); } }, "Use game folder") : null) : null),
+    play);
+}
+
+/* ---------- Nova Legal links ---------- */
+const NOVA_LEGAL = "https://nova-legal.shadylabs.workers.dev";
+function legalLinks() {
+  return h("div", { class: "card" }, h("h2", {}, "Full legal information"),
+    h("div", { class: "sub" }, "The complete, current documents live on Nova Legal."),
+    h("div", { style: "display:flex;flex-wrap:wrap;gap:8px" },
+      [["Nova Forge on Nova Legal", "/products/nova-forge"], ["Nova Forge Terms", "/nova-forge-terms"], ["Copyright & DMCA notices", "/dmca"], ["Nova Legal home", "/"]]
+        .map(([label, path]) => h("button", { class: "btn", onclick: () => ext(NOVA_LEGAL + path) }, label, icon("ext")))));
 }
 
 /* ---------- Game: Mods ---------- */
@@ -430,6 +488,7 @@ async function viewSettings() {
     out.push(h("div", { class: "card" }, h("h2", {}, "Where your data lives"), h("div", { class: "sub" }, "Profiles, mod catalogs and backups are stored locally on this PC. Nothing is uploaded."),
       h("div", { class: "fieldrow" }, h("input", { type: "text", readOnly: true, value: S.boot.dataDir }), h("button", { class: "btn", onclick: () => api("open_path", { path: S.boot.dataDir }).catch(fail) }, "Open folder"))));
   } else if (S.tab === "legal") {
+    out.push(legalLinks());
     out.push(h("div", { class: "card" }, h("h2", {}, "Legal notice"), h("div", { style: "height:10px" }), renderLegal(S.boot.legal)));
   } else {
     out.push(h("div", { class: "card" }, h("h2", {}, "Nova Forge"), h("p", { class: "muted", style: "margin-top:6px" }, `Version ${S.boot.version}. A game customization and mod catalog tool. Not an emulator; includes no game files.`)));
@@ -520,7 +579,8 @@ async function init() {
         h("div", { class: "legal", style: "margin-top:12px" },
           h("p", {}, "Nova Forge does not own, sell, host, or distribute any third-party games or game files. You must provide your own legally obtained copies."),
           h("p", {}, "It is not an emulator and includes none. It is not affiliated with or endorsed by any game publisher."),
-          h("p", {}, "Modding carries risk, including save loss. Back up your saves.")),
+          h("p", {}, "Modding carries risk, including save loss. Back up your saves."),
+          h("p", {}, "Full details: ", h("a", { class: "link", onclick: () => ext(NOVA_LEGAL + "/products/nova-forge") }, "Nova Legal"), ".")),
         h("div", { class: "actions" }, h("button", { class: "btn primary", onclick: async () => { S.cfg.acceptedLegalNotice = true; await saveCfg(); close(); } }, "I understand"))]);
       document.getElementById("modal").onclick = null;
     }

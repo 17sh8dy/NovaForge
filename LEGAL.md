@@ -14,7 +14,9 @@ Nova Forge is not affiliated with, sponsored by, or endorsed by any third-party 
 
 ## Emulation
 
-Nova Forge is not an emulator and does not include, bundle, or distribute any emulator. Where a supported game requires emulation to run on PC, Nova Forge will direct users to actively maintained, legitimately supported emulator projects at the point of need. Nova Forge does not recommend or link to discontinued or unsupported emulator projects.
+Nova Forge is not an emulator and does not include, bundle, or distribute any emulator. Where a supported game requires emulation to run on PC, Nova Forge will direct users to actively maintained, legitimately supported emulator projects at the point of need. Nova Forge does not recommend or link to discontinued or unsupported emulator projects. Nova Forge can start an emulator that you installed yourself, using a game file that you provide; it only launches the program and does not modify the emulator or the game.
+
+The complete, current legal documents for Nova Forge are published on Nova Legal.
 
 ## No Guarantee of Compatibility
 
