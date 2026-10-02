@@ -1,0 +1,19 @@
+﻿[
+    {
+        "id": "e1ad2e0f-0858-4eae-bd47-34f8db970eff",
+        "name": "Moonrush",
+        "notes": "Mine. v0.3.0 - Mario gets faster with every Moon; captures, Cappy and first person. SMO 1.0.0 on Ryujinx. Zip: D:\\My SMO Mods\\Releases\\Moonrush-v0.3.0.zip",
+        "sourcePath": "C:\\Users\\Brandon\\AppData\\Roaming\\Ryujinx\\mods\\contents\\0100000000010000\\Moonrush",
+        "enabled": true,
+        "addedUtc": "2026-10-02T21:06:46.0000000Z"
+    },
+    {
+        "id": "557841e0-db15-4508-8c0f-3156e56fd50f",
+        "name": "Moonrush Launcher",
+        "notes": "Mine. Windows settings app for Moonrush (Play -> settings -> Save & launch). Source in D:\\My SMO Mods\\Moonrush.",
+        "sourcePath": "D:\\My SMO Mods\\Moonrush\\launcher",
+        "enabled": true,
+        "addedUtc": "2026-10-02T21:06:46.0000000Z",
+        "launcherPath": "D:\\My SMO Mods\\Moonrush\\launcher\\src-tauri\\target\\debug\\moonrush-launcher.exe"
+    }
+]

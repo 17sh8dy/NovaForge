@@ -1,0 +1,18 @@
+﻿{
+    "name":  "Nova Forge",
+    "version":  "0.1.0",
+    "games":  [
+
+              ],
+    "settings":  {
+                     "theme":  "dark"
+                 },
+    "activeProfileId":  {
+                            "botw":  "82574322-b36d-40d1-a292-cec2ce37e26c",
+                            "minecraft":  "806242ac-d9e3-4afa-8923-53bb1fea287a",
+                            "mario-odyssey":  "33a61637-1c97-4020-8207-32c7c5d73895"
+                        },
+    "acceptedLegalNotice":  true,
+    "activeGameId":  "mario-odyssey",
+    "accentColor":  "Violet"
+}

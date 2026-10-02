@@ -1,0 +1,116 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nova Forge" Height="780" Width="1240" MinHeight="620" MinWidth="980"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource Brush.Bg}"
+        FontFamily="Segoe UI">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Theme/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="30"/>
+        </Grid.RowDefinitions>
+
+        <!-- ===== Header ===== -->
+        <Border Grid.Row="0" Background="{StaticResource Brush.SidebarBg}" BorderBrush="{StaticResource Brush.BorderSubtle}" BorderThickness="0,0,0,1">
+            <Grid Margin="18,0">
+                <Button x:Name="BrandHomeButton" Style="{StaticResource Btn.Ghost}" HorizontalAlignment="Left" VerticalAlignment="Center" Cursor="Hand" ToolTip="Back to Home">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="NOVA" FontSize="16" FontWeight="Bold" Foreground="{StaticResource Brush.TextPrimary}" VerticalAlignment="Center"/>
+                        <TextBlock Text="FORGE" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource Brush.Accent}" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock x:Name="ActiveProfileText" Text="No profile selected" Foreground="{StaticResource Brush.TextSecondary}" FontSize="12" VerticalAlignment="Center" Margin="0,0,14,0"/>
+                    <Button x:Name="LegalHeaderButton" Content="Legal" Style="{StaticResource Btn.Ghost}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== Body ===== -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Border Grid.Column="0" Background="{StaticResource Brush.SidebarBg}" BorderBrush="{StaticResource Brush.BorderSubtle}" BorderThickness="0,0,1,0">
+                <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource Brush.BorderSubtle}" BorderThickness="0,1,0,0" Padding="10">
+                        <TextBlock Text="Nova Forge is independently developed and is not affiliated with, sponsored by, or endorsed by any third-party company, organization, or rights holder." Style="{StaticResource Text.Muted}" TextWrapping="Wrap"/>
+                    </Border>
+
+                    <StackPanel x:Name="NavPanel" Margin="0,14,0,0">
+                        <RadioButton x:Name="NavOverview" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}" IsChecked="True">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#128202;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Overview"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="NavGameSettings" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#9881;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Game Settings"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="NavCharacter" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#128100;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Character Customization"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="NavMods" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#129513;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Mods"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="NavSaves" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#128190;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Save Management"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="NavProfiles" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#128100;&#65039;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Profiles"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <Separator Margin="16,10" Background="{StaticResource Brush.BorderSubtle}"/>
+                        <RadioButton x:Name="NavSettings" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#128295;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Settings"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Column="1" Background="{StaticResource Brush.Bg}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0">
+                    <ContentControl x:Name="MainContent" Margin="28" HorizontalContentAlignment="Stretch"/>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- ===== Footer / status bar ===== -->
+        <Border Grid.Row="2" Background="{StaticResource Brush.SidebarBg}" BorderBrush="{StaticResource Brush.BorderSubtle}" BorderThickness="0,1,0,0">
+            <Grid Margin="18,0">
+                <TextBlock x:Name="StatusText" Text="Ready." Style="{StaticResource Text.Muted}" VerticalAlignment="Center"/>
+                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Style="{StaticResource Text.Muted}"
+                           Text="Nova Forge does not own, host, or distribute any third-party game files."/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

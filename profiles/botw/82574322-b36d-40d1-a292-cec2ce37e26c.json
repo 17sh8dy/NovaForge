@@ -1,0 +1,15 @@
+﻿{
+    "id":  "82574322-b36d-40d1-a292-cec2ce37e26c",
+    "gameId":  "botw",
+    "name":  "My Modded Save",
+    "gameDirectory":  "C:\\Apps\\Cemu\\CEMU BOTW DUMP\\CEMU BOTW DUMP\\The Legend of Zelda Breath of the Wild [ALZE0101]",
+    "saveDirectory":  null,
+    "notes":  "",
+    "createdUtc":  "2026-09-18T21:15:01.9299111Z",
+    "modifiedUtc":  "2026-09-18T22:11:12.7676013Z",
+    "dlcDirectory":  "C:\\Apps\\Cemu\\CEMU BOTW DUMP\\CEMU BOTW DUMP\\The Legend of Zelda Breath of the Wild (DLC) (2.182 GB) (USA) (unpacked)",
+    "updateDirectory":  null,
+    "previousGameDirectory":  null,
+    "previousDlcDirectory":  null,
+    "previousUpdateDirectory":  null
+}

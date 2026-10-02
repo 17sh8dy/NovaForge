@@ -1,0 +1,15 @@
+﻿{
+    "id":  "806242ac-d9e3-4afa-8923-53bb1fea287a",
+    "gameId":  "minecraft",
+    "name":  "Default",
+    "gameDirectory":  null,
+    "dlcDirectory":  null,
+    "updateDirectory":  null,
+    "previousGameDirectory":  null,
+    "previousDlcDirectory":  null,
+    "previousUpdateDirectory":  null,
+    "saveDirectory":  null,
+    "notes":  "",
+    "createdUtc":  "2026-09-18T22:26:16.7458124Z",
+    "modifiedUtc":  "2026-09-18T22:26:16.7508441Z"
+}
