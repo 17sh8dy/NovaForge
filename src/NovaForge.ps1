@@ -66,14 +66,25 @@ try {
         $iconDir = Join-Path $Global:NF_Root 'Logo\F1'
         $icoPath = Join-Path $iconDir 'novaforge-f1.ico'
         if (Test-Path -LiteralPath $icoPath) {
-            $Global:NF_Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create((New-Object System.Uri($icoPath)))
+            # An .ico holds several sizes. Pick the frame that matches the screen DPI (32px at 100%)
+            # instead of letting WPF stretch the first/smallest one, which is what made it blurry.
+            $decoder = New-Object System.Windows.Media.Imaging.IconBitmapDecoder((New-Object System.Uri($icoPath)), 'None', 'OnLoad')
+            $dpiScale = 1.0
+            try { $dpiScale = [System.Windows.Media.VisualTreeHelper]::GetDpi($Global:NF_Window).DpiScaleX } catch {}
+            $want = [Math]::Ceiling(32 * $dpiScale)
+            $frame = @($decoder.Frames | Sort-Object PixelWidth | Where-Object { $_.PixelWidth -ge $want } | Select-Object -First 1)
+            if ($frame.Count -eq 0) { $frame = @($decoder.Frames | Sort-Object PixelWidth -Descending | Select-Object -First 1) }
+            $Global:NF_Window.Icon = $frame[0]
         }
-        $logoPng = Join-Path $iconDir 'novaforge-f1-64.png'
+        $logoPng = Join-Path $iconDir 'novaforge-f1-128.png'
         $brandBtn = $Global:NF_Window.FindName('BrandHomeButton')
         if ($brandBtn -and (Test-Path -LiteralPath $logoPng)) {
             $logo = New-Object System.Windows.Controls.Image
-            $logo.Source = New-Object System.Windows.Media.Imaging.BitmapImage(New-Object System.Uri($logoPng))
-            $logo.Width = 24; $logo.Height = 24; $logo.Margin = '0,0,10,0'
+            $bi = New-Object System.Windows.Media.Imaging.BitmapImage
+            $bi.BeginInit(); $bi.UriSource = New-Object System.Uri($logoPng); $bi.CacheOption = 'OnLoad'; $bi.EndInit()
+            $bi.Freeze()
+            $logo.Source = $bi
+            $logo.Width = 28; $logo.Height = 28; $logo.Margin = '0,0,10,0'
             $logo.VerticalAlignment = 'Center'
             [System.Windows.Media.RenderOptions]::SetBitmapScalingMode($logo, 'HighQuality')
             $brandBtn.Content.Children.Insert(0, $logo)

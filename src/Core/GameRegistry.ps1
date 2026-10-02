@@ -22,6 +22,20 @@ $script:NF_Emu = @{
     }
 }
 
+# "Don't have the game yet?" -- shown per game. Nova Forge never sells, provides or hosts game copies
+# (not even free ones); these are official stores and, for Nintendo titles, guides for dumping a copy
+# you own from your own console. Re-check every link before a release.
+$script:NF_NoCopiesNote = "Nova Forge does not sell or provide copies of any third-party game -- not even free ones. You need your own legally obtained copy."
+$script:NF_NintendoNote = "Nintendo games can only be used on PC from a dump of a copy you own, made from your own console. Nova Forge does not provide dumps, keys, or firmware."
+$script:NF_Get = @{
+    BotwStore = @{ Label = 'Buy Breath of the Wild (Nintendo)'; Url = 'https://www.nintendo.com/us/store/products/the-legend-of-zelda-breath-of-the-wild-switch/' }
+    SmoStore  = @{ Label = 'Buy Super Mario Odyssey (Nintendo)'; Url = 'https://www.nintendo.com/us/store/products/super-mario-odyssey-switch/' }
+    SwitchDump = @{ Label = 'Guide: dumping Switch games (GameBanana tutorial)'; Url = 'https://gamebanana.com/tuts/19858' }
+    WiiUDump  = @{ Label = 'Guide: dumping Wii U games for Cemu (Dumpling)'; Url = 'https://cemu.cfw.guide/using-dumpling.html' }
+    McDownload = @{ Label = 'Minecraft: Java Edition - download / buy (minecraft.net)'; Url = 'https://www.minecraft.net/en-us/download' }
+    McStore   = @{ Label = 'Minecraft: Java Edition - Microsoft Store'; Url = 'https://apps.microsoft.com/detail/9pj8266bhfwn?hl=en-US&gl=US' }
+}
+
 function Get-NFGames {
     return @(
         [PSCustomObject]@{
@@ -34,6 +48,10 @@ function Get-NFGames {
             Supported     = $true
             ValidatorPrefix = 'Botw'
             Emulators     = @($script:NF_Emu.Cemu, $script:NF_Emu.Ryubing)
+            # Sections shown in this game's own sidebar (Overview and Profiles always show).
+            Sections      = @('GameSettings', 'Character', 'Mods', 'SaveManagement')
+            GetGameNote   = "$($script:NF_NoCopiesNote) $($script:NF_NintendoNote)"
+            GetGameLinks  = @($script:NF_Get.BotwStore, $script:NF_Get.WiiUDump, $script:NF_Get.SwitchDump)
         },
         [PSCustomObject]@{
             Id            = 'totk'
@@ -45,6 +63,9 @@ function Get-NFGames {
             Supported     = $false
             ValidatorPrefix = $null
             Emulators     = @($script:NF_Emu.Ryubing)
+            Sections      = @()
+            GetGameNote   = "$($script:NF_NoCopiesNote) $($script:NF_NintendoNote)"
+            GetGameLinks  = @($script:NF_Get.SwitchDump)
         },
         [PSCustomObject]@{
             Id            = 'mario-odyssey'
@@ -56,17 +77,10 @@ function Get-NFGames {
             Supported     = $true
             ValidatorPrefix = $null
             Emulators     = @($script:NF_Emu.Ryubing)
-        },
-        [PSCustomObject]@{
-            Id            = 'splatoon-3'
-            Name          = 'Splatoon 3'
-            ShortName     = 'Splatoon 3'
-            Platform      = 'Nintendo Switch'
-            PlatformGroup = 'Nintendo'
-            Icon          = [System.Char]::ConvertFromUtf32(0x1F991)
-            Supported     = $false
-            ValidatorPrefix = $null
-            Emulators     = @($script:NF_Emu.Ryubing)
+            # No Game Settings / Character Customization: Odyssey has none planned yet (Moonrush is cataloged under Mods).
+            Sections      = @('Mods', 'SaveManagement')
+            GetGameNote   = "$($script:NF_NoCopiesNote) $($script:NF_NintendoNote)"
+            GetGameLinks  = @($script:NF_Get.SmoStore, $script:NF_Get.SwitchDump)
         },
         [PSCustomObject]@{
             Id            = 'minecraft'
@@ -78,6 +92,9 @@ function Get-NFGames {
             Supported     = $true
             ValidatorPrefix = 'Minecraft'
             Emulators     = @()
+            Sections      = @('GameSettings', 'Character', 'Mods', 'SaveManagement')
+            GetGameNote   = $script:NF_NoCopiesNote
+            GetGameLinks  = @($script:NF_Get.McDownload, $script:NF_Get.McStore)
         }
     )
 }

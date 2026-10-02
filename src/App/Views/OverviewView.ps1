@@ -126,6 +126,27 @@ function New-NFOverviewView {
         $root.Children.Add($emuNote.Root) | Out-Null
     }
 
+    # --- Don't have the game yet? (shown until a game folder is set for this profile) ---
+    if (-not $profile.gameDirectory -and (Get-Member -InputObject $game -Name 'GetGameNote' -MemberType NoteProperty)) {
+        $getCard = New-NFCard
+        $getCard.Body.Children.Add((New-NFSectionHeader -Title "Don't have the game yet?" -NoMarginBottom)) | Out-Null
+        $getNote = New-Object System.Windows.Controls.TextBlock
+        $getNote.Style = Get-NFRes 'Text.Secondary'
+        $getNote.TextWrapping = 'Wrap'
+        $getNote.Margin = "0,8,0,12"
+        $getNote.Text = $game.GetGameNote
+        $getCard.Body.Children.Add($getNote) | Out-Null
+        foreach ($link in @($game.GetGameLinks)) {
+            $linkBtn = New-NFSecondaryButton -Text $link.Label
+            $linkBtn.HorizontalAlignment = 'Left'
+            $linkBtn.Margin = "0,0,0,8"
+            $linkUrl = $link.Url
+            $linkBtn.Add_Click({ Start-Process $linkUrl }.GetNewClosure()) | Out-Null
+            $getCard.Body.Children.Add($linkBtn) | Out-Null
+        }
+        $root.Children.Add($getCard.Root) | Out-Null
+    }
+
     # --- Suggested emulators (links only; Nova Forge bundles none) ---
     $emus = @()
     if (Get-Member -InputObject $game -Name 'Emulators' -MemberType NoteProperty) { $emus = @($game.Emulators) }

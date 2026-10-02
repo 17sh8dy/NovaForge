@@ -6,11 +6,13 @@ $Global:NF_State = [PSCustomObject]@{
     CurrentGameId    = $null
     CurrentProfileId = $null
     CurrentSection   = 'Overview'
+    InGame           = $false
     CurrentSettingsTab = 'General'
 }
 
 function Initialize-NFShell {
     $Global:NF_Nav = @{
+        Home      = $Global:NF_Window.FindName('NavHome')
         Overview  = $Global:NF_Window.FindName('NavOverview')
         GameSettings = $Global:NF_Window.FindName('NavGameSettings')
         Character = $Global:NF_Window.FindName('NavCharacter')
@@ -23,6 +25,10 @@ function Initialize-NFShell {
     $Global:NF_ActiveProfileText = $Global:NF_Window.FindName('ActiveProfileText')
     $Global:NF_StatusText = $Global:NF_Window.FindName('StatusText')
 
+    $Global:NF_GameNavHeader = $Global:NF_Window.FindName('GameNavHeader')
+    $Global:NF_NavGameTitle = $Global:NF_Window.FindName('NavGameTitle')
+    $Global:NF_Window.FindName('NavBack').Add_Click({ Show-NFGameSelector }) | Out-Null
+    $Global:NF_Nav.Home.Add_Checked({ if ($Global:NF_SuppressNav -ne $true) { Show-NFGameSelector } }) | Out-Null
     $Global:NF_Window.FindName('BrandHomeButton').Add_Click({ Show-NFGameSelector }) | Out-Null
     $Global:NF_Window.FindName('LegalHeaderButton').Add_Click({ Show-NFView -Section 'Settings' -SettingsTab 'Legal' }) | Out-Null
 
@@ -34,40 +40,36 @@ function Initialize-NFShell {
     $Global:NF_Nav.Profiles.Add_Checked({ if ($Global:NF_SuppressNav -ne $true) { Show-NFView -Section 'Profiles' } }) | Out-Null
     $Global:NF_Nav.Settings.Add_Checked({ if ($Global:NF_SuppressNav -ne $true) { Show-NFView -Section 'Settings' } }) | Out-Null
 
-    # --- Restore last session state ---
-    $cfg = Get-NFConfig
-    if ($cfg.activeGameId) {
-        $game = Get-NFGame -Id $cfg.activeGameId
-        if ($game -and $game.Supported) {
-            Set-NFActiveGame -GameId $game.Id -Silent
-        }
-    }
-
-    Update-NFChrome
-    Show-NFView -Section $Global:NF_State.CurrentSection
+    # Always start at Home: pick a game and a profile there. (Each game then has its own sidebar.)
+    Show-NFGameSelector
 }
 
 function Update-NFChrome {
-    if ($Global:NF_State.CurrentGameId) {
+    # Home shows only Home + Settings. Inside a game, the sidebar shows that game's own
+    # sections (Game.Sections in Core\GameRegistry.ps1) plus Overview and Profiles.
+    $nav = $Global:NF_Nav
+    $inGame = ($Global:NF_State.InGame -and $Global:NF_State.CurrentGameId)
+    $gameKeys = @{ GameSettings = 'GameSettings'; Character = 'Character'; Mods = 'Mods'; Saves = 'SaveManagement' }
+
+    if ($inGame) {
         $game = Get-NFGame -Id $Global:NF_State.CurrentGameId
         $profile = if ($Global:NF_State.CurrentProfileId) { Get-NFProfile -GameId $game.Id -ProfileId $Global:NF_State.CurrentProfileId } else { $null }
-        $Global:NF_ActiveProfileText.Text = if ($profile) { "Profile: $($profile.name)" } else { "No profile selected" }
+        $Global:NF_ActiveProfileText.Text = if ($profile) { "$($game.ShortName)  -  Profile: $($profile.name)" } else { "No profile selected" }
+        $sections = if (Get-Member -InputObject $game -Name 'Sections' -MemberType NoteProperty) { @($game.Sections) } else { @() }
 
-        foreach ($key in @('GameSettings','Character','Mods','Saves','Profiles')) {
-            $Global:NF_Nav[$key].IsEnabled = $true
+        $Global:NF_GameNavHeader.Visibility = 'Visible'
+        $Global:NF_NavGameTitle.Text = $game.Name
+        $nav.Home.Visibility = 'Collapsed'
+        $nav.Overview.Visibility = 'Visible'
+        $nav.Profiles.Visibility = 'Visible'
+        foreach ($key in $gameKeys.Keys) {
+            $nav[$key].Visibility = if ($sections -contains $gameKeys[$key]) { 'Visible' } else { 'Collapsed' }
         }
-        # Character Customization and Game Settings don't mean anything without an
-        # active game, so they're hidden (not just grayed out) until one is chosen.
-        $Global:NF_Nav.GameSettings.Visibility = 'Visible'
-        $Global:NF_Nav.Character.Visibility = 'Visible'
     } else {
-        $Global:NF_ActiveProfileText.Text = "No game selected"
-
-        foreach ($key in @('GameSettings','Character','Mods','Saves','Profiles')) {
-            $Global:NF_Nav[$key].IsEnabled = $false
-        }
-        $Global:NF_Nav.GameSettings.Visibility = 'Collapsed'
-        $Global:NF_Nav.Character.Visibility = 'Collapsed'
+        $Global:NF_ActiveProfileText.Text = ""
+        $Global:NF_GameNavHeader.Visibility = 'Collapsed'
+        $nav.Home.Visibility = 'Visible'
+        foreach ($key in @('Overview', 'Profiles') + @($gameKeys.Keys)) { $nav[$key].Visibility = 'Collapsed' }
     }
 }
 
@@ -75,6 +77,7 @@ function Set-NFActiveGame {
     param([Parameter(Mandatory)][string]$GameId, [switch]$Silent)
 
     $Global:NF_State.CurrentGameId = $GameId
+    $Global:NF_State.InGame = $true
 
     $profiles = @(Get-NFProfiles -GameId $GameId)
     if ($profiles.Count -eq 0) {
@@ -107,9 +110,13 @@ function Set-NFActiveProfile {
 }
 
 function Show-NFGameSelector {
+    $Global:NF_State.InGame = $false
+    $Global:NF_State.CurrentSection = 'Overview'
     $Global:NF_SuppressNav = $true
     foreach ($nav in $Global:NF_Nav.Values) { $nav.IsChecked = $false }
+    $Global:NF_Nav.Home.IsChecked = $true
     $Global:NF_SuppressNav = $false
+    Update-NFChrome
     $Global:NF_Content.Content = New-NFGameSelectorView
     $Global:NF_StatusText.Text = "Choose a game to begin."
 }
@@ -138,10 +145,16 @@ function Show-NFView {
     }
     $Global:NF_SuppressNav = $false
 
-    $needsGame = $Section -in @('GameSettings','Character','Mods','SaveManagement','Profiles')
-    if ($needsGame -and -not $Global:NF_State.CurrentGameId) {
-        $Global:NF_Content.Content = New-NFOverviewView
+    $needsGame = $Section -in @('Overview','GameSettings','Character','Mods','SaveManagement','Profiles')
+    if ($needsGame -and -not $Global:NF_State.InGame) {
+        Show-NFGameSelector
         return
+    }
+    # A game only has the sections it declares; anything else falls back to its Overview.
+    if ($Global:NF_State.InGame -and $Section -in @('GameSettings','Character','Mods','SaveManagement')) {
+        $g = Get-NFGame -Id $Global:NF_State.CurrentGameId
+        $gs = if (Get-Member -InputObject $g -Name 'Sections' -MemberType NoteProperty) { @($g.Sections) } else { @() }
+        if ($gs -notcontains $Section) { $Section = 'Overview' }
     }
 
     $Global:NF_Content.Content = switch ($Section) {

@@ -48,11 +48,51 @@ function New-NFGameTile {
     $platTb.Text = $Game.Platform
     $stack.Children.Add($platTb) | Out-Null
 
+    # Pick the profile right on the tile; clicking anywhere else on the tile opens the game.
+    if ($Game.Supported) {
+        $profiles = @(Get-NFProfiles -GameId $Game.Id)
+        $profLabel = New-Object System.Windows.Controls.TextBlock
+        $profLabel.Style = Get-NFRes 'Text.Muted'
+        $profLabel.Text = "Profile"
+        $profLabel.Margin = "0,14,0,4"
+        $stack.Children.Add($profLabel) | Out-Null
+
+        $combo = New-Object System.Windows.Controls.ComboBox
+        $combo.Style = Get-NFRes 'Input.ComboBox'
+        foreach ($pr in $profiles) { $combo.Items.Add($pr.name) | Out-Null }
+        if ($profiles.Count -eq 0) { $combo.Items.Add("Default (created on first open)") | Out-Null }
+        $activeId = Get-NFActiveProfileId -GameId $Game.Id
+        $idx = 0
+        for ($i = 0; $i -lt $profiles.Count; $i++) { if ($profiles[$i].id -eq $activeId) { $idx = $i } }
+        $combo.SelectedIndex = $idx
+        $combo.IsEnabled = ($profiles.Count -gt 0)
+        $comboGameId = $Game.Id
+        $comboProfiles = $profiles
+        $combo.Add_SelectionChanged({
+            if ($combo.SelectedIndex -ge 0 -and $combo.SelectedIndex -lt $comboProfiles.Count) {
+                Set-NFActiveProfileId -GameId $comboGameId -ProfileId $comboProfiles[$combo.SelectedIndex].id
+            }
+        }.GetNewClosure()) | Out-Null
+        $stack.Children.Add($combo) | Out-Null
+
+        $openHint = New-Object System.Windows.Controls.TextBlock
+        $openHint.Style = Get-NFRes 'Text.Body'
+        $openHint.Foreground = Get-NFRes 'Brush.Accent'
+        $openHint.FontWeight = 'SemiBold'
+        $openHint.Text = "Open $([char]0x2192)"
+        $openHint.Margin = "0,14,0,0"
+        $stack.Children.Add($openHint) | Out-Null
+    }
+
     $tile.Child = $stack
 
     if ($Game.Supported) {
         $capturedId = $Game.Id
-        $tile.Add_MouseLeftButtonUp({ Set-NFActiveGame -GameId $capturedId }.GetNewClosure()) | Out-Null
+        $tile.Add_MouseLeftButtonUp({
+            # Ignore clicks that came from the profile dropdown (or its popup items).
+            if ($_.Source -is [System.Windows.Controls.ComboBox] -or $_.Source -is [System.Windows.Controls.ComboBoxItem]) { return }
+            Set-NFActiveGame -GameId $capturedId
+        }.GetNewClosure()) | Out-Null
     } else {
         $tile.Opacity = 0.55
     }

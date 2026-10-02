@@ -49,7 +49,17 @@
                     </Border>
 
                     <StackPanel x:Name="NavPanel" Margin="0,14,0,0">
-                        <RadioButton x:Name="NavOverview" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}" IsChecked="True">
+                        <RadioButton x:Name="NavHome" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}" IsChecked="True">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#127968;" Margin="0,0,10,0"/>
+                                <TextBlock Text="Home"/>
+                            </StackPanel>
+                        </RadioButton>
+                        <StackPanel x:Name="GameNavHeader" Visibility="Collapsed" Margin="18,0,14,10">
+                            <Button x:Name="NavBack" Content="&#8592;  All games" Style="{StaticResource Btn.Ghost}" HorizontalAlignment="Left" Cursor="Hand"/>
+                            <TextBlock x:Name="NavGameTitle" Style="{StaticResource Text.Muted}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="2,10,0,0"/>
+                        </StackPanel>
+                        <RadioButton x:Name="NavOverview" GroupName="Nav" Style="{StaticResource Btn.SidebarNav}">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#128202;" Margin="0,0,10,0"/>
                                 <TextBlock Text="Overview"/>
