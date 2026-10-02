@@ -10,7 +10,21 @@ Read `LEGAL.md` before distributing or extending this project.
 If Nova Forge ever fails to start, check `nova-forge-crash.log` in this folder --
 the app writes full exception details there instead of just closing silently.
 
-## Running it
+## Nova Forge 0.2 (Tauri app) - the current version
+
+`app\` is the real app: Tauri 2 + a plain HTML/JS interface, the same stack as Atlas and the Moonrush launcher.
+The PowerShell prototype under `src\` is the legacy 0.1 version and is no longer developed.
+
+```
+cd app\src-tauri
+cargo build --release        # app\src-tauri\target\release\nova-forge.exe
+```
+
+Data lives in `%APPDATA%\NovaForge\` (profiles, mod catalogs, backups). The first run imports the old prototype's
+profiles and mods from this repo folder if it finds them. The game list, per-game sections and links are in
+`app\src-tauri\games.json`.
+
+## Running the legacy PowerShell prototype
 
 Double-click `NovaForge.bat`, or:
 
