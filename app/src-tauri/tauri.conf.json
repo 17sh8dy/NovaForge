@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Nova Forge",
+  "version": "0.2.0",
+  "identifier": "dev.nova.forge",
+  "build": { "frontendDist": "../ui" },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "Nova Forge",
+        "width": 1240,
+        "height": 780,
+        "minWidth": 980,
+        "minHeight": 620,
+        "backgroundColor": "#0e0d13",
+        "theme": "Dark"
+      }
+    ],
+    "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" }
+  },
+  "bundle": { "active": false, "icon": ["icons/icon.ico"] }
+}

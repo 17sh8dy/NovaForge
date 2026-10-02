@@ -1,0 +1,113 @@
+{
+  "emulators": {
+    "cemu": { "name": "Cemu", "system": "Wii U", "url": "https://cemu.info/", "note": "Actively maintained open-source Wii U emulator." },
+    "ryubing": { "name": "Ryubing (Ryujinx)", "system": "Switch", "url": "https://ryujinx.app/", "note": "The actively maintained continuation of Ryujinx. The original Ryujinx project was discontinued." }
+  },
+  "noCopiesNote": "Nova Forge does not sell or provide copies of any third-party game — not even free ones. You need your own legally obtained copy.",
+  "nintendoNote": "Nintendo games can only be used on PC from a dump of a copy you own, made from your own console. Nova Forge does not provide dumps, keys, or firmware.",
+  "links": {
+    "botwStore": { "label": "Buy Breath of the Wild (Nintendo)", "url": "https://www.nintendo.com/us/store/products/the-legend-of-zelda-breath-of-the-wild-switch/" },
+    "smoStore": { "label": "Buy Super Mario Odyssey (Nintendo)", "url": "https://www.nintendo.com/us/store/products/super-mario-odyssey-switch/" },
+    "switchDump": { "label": "Guide: dumping Switch games (GameBanana tutorial)", "url": "https://gamebanana.com/tuts/19858" },
+    "wiiuDump": { "label": "Guide: dumping Wii U games for Cemu (Dumpling)", "url": "https://cemu.cfw.guide/using-dumpling.html" },
+    "mcDownload": { "label": "Minecraft: Java Edition — download / buy (minecraft.net)", "url": "https://www.minecraft.net/en-us/download" },
+    "mcStore": { "label": "Minecraft: Java Edition — Microsoft Store", "url": "https://apps.microsoft.com/detail/9pj8266bhfwn?hl=en-US&gl=US" }
+  },
+  "modSites": [
+    { "name": "Nexus Mods", "url": "https://www.nexusmods.com/" },
+    { "name": "GameBanana", "url": "https://gamebanana.com/" },
+    { "name": "Modrinth", "url": "https://modrinth.com/" },
+    { "name": "CurseForge", "url": "https://www.curseforge.com/" },
+    { "name": "ModsHost", "url": "https://modshost.co/" }
+  ],
+  "games": [
+    {
+      "id": "botw",
+      "name": "The Legend of Zelda: Breath of the Wild",
+      "shortName": "BOTW",
+      "monogram": "BotW",
+      "platform": "Nintendo Switch / Wii U",
+      "group": "Nintendo",
+      "supported": true,
+      "colors": ["#2f8f7b", "#16323a"],
+      "emulators": ["cemu", "ryubing"],
+      "sections": ["gameSettings", "character", "mods", "saves"],
+      "getNote": ["noCopiesNote", "nintendoNote"],
+      "getLinks": ["botwStore", "wiiuDump", "switchDump"],
+      "validate": {
+        "game": { "label": "Breath of the Wild dump", "requires": ["code", "content", "meta"], "hint": "the standard Wii U game-dump layout Cemu uses" },
+        "update": { "label": "Breath of the Wild update dump", "requires": ["code", "content", "meta"], "hint": "the same layout as the base game dump" },
+        "dlc": { "label": "Breath of the Wild DLC", "requires": ["content"], "hint": "the standard Wii U add-on-content layout" }
+      },
+      "folderHelp": { "game": "The base game dump. Must contain code, content and meta folders." },
+      "saveNote": "Save data location depends on how you run the game (real hardware or an emulator) and is not auto-detected. Point Nova Forge at the folder yourself.",
+      "planned": {
+        "gameSettings": ["Uncap frame rate", "Resolution scale", "Disable motion blur", "Durability options", "Difficulty preset"],
+        "character": ["Equipped outfit", "Amiibo-linked costumes"]
+      },
+      "about": "Breath of the Wild is Nova Forge's first supported title. Folder setup, profiles, mod cataloguing and save backup work today; config editing and character customization are planned."
+    },
+    {
+      "id": "mario-odyssey",
+      "name": "Super Mario Odyssey",
+      "shortName": "Odyssey",
+      "monogram": "SMO",
+      "platform": "Nintendo Switch",
+      "group": "Nintendo",
+      "supported": true,
+      "colors": ["#e0473c", "#5a1830"],
+      "emulators": ["ryubing"],
+      "sections": ["mods", "saves"],
+      "getNote": ["noCopiesNote", "nintendoNote"],
+      "getLinks": ["smoStore", "switchDump"],
+      "validate": {},
+      "folderHelp": { "game": "Your base game install." },
+      "saveNote": "Save data location depends on how you run the game and is not auto-detected. Point Nova Forge at the folder yourself.",
+      "planned": {},
+      "about": "Odyssey has no game-settings or character tools yet. Mods you make or collect, like Moonrush, are catalogued under Mods."
+    },
+    {
+      "id": "totk",
+      "name": "The Legend of Zelda: Tears of the Kingdom",
+      "shortName": "TOTK",
+      "monogram": "TotK",
+      "platform": "Nintendo Switch",
+      "group": "Nintendo",
+      "supported": false,
+      "colors": ["#4a6bb8", "#1b2347"],
+      "emulators": ["ryubing"],
+      "sections": [],
+      "getNote": ["noCopiesNote", "nintendoNote"],
+      "getLinks": ["switchDump"],
+      "validate": {},
+      "folderHelp": {},
+      "saveNote": "",
+      "planned": {},
+      "about": ""
+    },
+    {
+      "id": "minecraft",
+      "name": "Minecraft: Java Edition",
+      "shortName": "Minecraft",
+      "monogram": "MC",
+      "platform": "PC / Linux (Java Edition)",
+      "group": "PC / Linux",
+      "supported": true,
+      "colors": ["#58a845", "#26401f"],
+      "emulators": [],
+      "sections": ["gameSettings", "character", "mods", "saves"],
+      "getNote": ["noCopiesNote"],
+      "getLinks": ["mcDownload", "mcStore"],
+      "validate": {
+        "game": { "label": ".minecraft", "requires": ["versions"], "hint": "created the first time the Minecraft launcher runs" }
+      },
+      "folderHelp": { "game": "Your .minecraft folder. Must contain a versions folder." },
+      "saveNote": "Worlds live in the saves folder inside your .minecraft folder.",
+      "planned": {
+        "gameSettings": ["Default server", "Default difficulty", "Keep inventory", "Allow cheats / command blocks"],
+        "character": ["Skin file (.png)", "Model (Classic / Slim)", "Cape file"]
+      },
+      "about": "Minecraft: Java Edition is the first PC title. Folder setup, profiles, mod cataloguing and save backup work today."
+    }
+  ]
+}
